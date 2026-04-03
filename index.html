@@ -9,15 +9,17 @@
       --bg: #f5f7fb;
       --card: #ffffff;
       --text: #1f2937;
-      --muted: #6b7281;
-      --line: #dbe3ea;
+      --muted: #6b7280;
+      --line: #dbe2ea;
       --accent: #1f4e79;
       --danger: #b42318;
       --success: #067647;
       --shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
       --radius: 16px;
     }
+
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
@@ -25,11 +27,13 @@
       color: var(--text);
       line-height: 1.45;
     }
+
     .wrap {
       max-width: 1320px;
       margin: 0 auto;
       padding: 20px;
     }
+
     h1, h2, h3 { margin: 0 0 10px; }
     p { margin: 0 0 12px; }
 
@@ -144,11 +148,14 @@
       margin-bottom: 12px;
     }
 
-    .change-grid {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      gap: 16px;
-      align-items: start;
+    .equipment-details {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .equipment-details.hidden {
+      display: none;
     }
 
     .machine-count-grid {
@@ -274,6 +281,42 @@
       justify-content: flex-end;
     }
 
+    .next-date-row {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--line);
+    }
+
+    .boost-block {
+      margin-top: 14px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      padding: 12px;
+    }
+
+    .boost-entry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .boost-entry {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfcfe;
+      padding: 10px;
+    }
+
+    .boost-entry label {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -329,13 +372,14 @@
     @media (max-width: 980px) {
       .grid { grid-template-columns: 1fr; }
       .stat-grid { grid-template-columns: 1fr; }
-      .change-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 640px) {
       .wrap { padding: 14px; }
       .machine-count-grid { grid-template-columns: 1fr; }
-      .modal-table th:nth-child(3), .modal-table td:nth-child(3) { display: none; }
+      .boost-entry-grid { grid-template-columns: 1fr; }
+      .modal-table th:nth-child(3),
+      .modal-table td:nth-child(3) { display: none; }
     }
   </style>
 </head>
@@ -352,9 +396,9 @@
           <div class="section-head">
             <div>
               <h2>Equipment changes</h2>
-              <p class="small">Each new row starts by copying the previous machine quantities. Use <strong>Remove all</strong> for the final removal date.</p>
+              <p class="small">Each new row starts by copying the previous machine quantities. Use the removal button when everything has been taken off site on that date.</p>
             </div>
-            <button type="button" class="secondary" id="addChangeBtn">Add change date</button>
+            <button type="button" class="secondary" id="addChangeTopBtn">Add change date</button>
           </div>
 
           <div id="changesContainer"></div>
@@ -464,23 +508,28 @@
   </div>
 
   <template id="changeTemplate">
-    <div class="change-card">
+    <div class="change-card" data-expanded="false">
       <div class="change-head">
         <h3 class="change-title">Equipment Change</h3>
         <div class="btn-row">
-          <button type="button" class="ghost remove-all-btn">Remove all</button>
+          <button type="button" class="ghost remove-all-btn">All equipment removed on this date</button>
           <button type="button" class="danger remove-change-btn">Remove date</button>
         </div>
       </div>
 
-      <div class="change-grid">
-        <div class="field">
-          <label>Date</label>
-          <input type="date" class="change-date" />
-        </div>
-        <div>
-          <div class="small" style="margin-bottom:8px; font-weight:700;">Machines in place at completion of works on this date</div>
-          <div class="machine-count-grid change-machine-count-grid"></div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" class="change-date" />
+      </div>
+
+      <div class="equipment-details hidden">
+        <div class="small" style="margin-bottom:8px; font-weight:700;">Equipment in place at completion of works on this date</div>
+        <div class="machine-count-grid change-machine-count-grid"></div>
+
+        <div class="boost-block change-boost-block"></div>
+
+        <div class="next-date-row">
+          <button type="button" class="secondary add-next-btn">Add next date</button>
         </div>
       </div>
     </div>
@@ -499,8 +548,7 @@
       { name: 'Trotec Qube (yellow dehum)', ratePerDay: 9.84, unit: 'kWh/day' },
       { name: 'Dri-Eaz DrizAir 2000 (blue upright dehum)', ratePerDay: 22.06, unit: 'kWh/day' },
       { name: 'Heylo Air Scrubber (orange AFD)', ratePerDay: 4.32, unit: 'kWh/day' },
-      { name: 'Drieaz Defender (blue AFD)', ratePerDay: 9.84, unit: 'kWh/day' },
-      { name: 'Drymatic Heat (boost bar?)', ratePerDay: 43.2, unit: 'kWh/day' }
+      { name: 'Drieaz Defender (blue AFD)', ratePerDay: 9.84, unit: 'kWh/day' }
     ];
 
     let machines = JSON.parse(JSON.stringify(DEFAULT_MACHINES));
@@ -573,8 +621,7 @@
       const startUtc = Date.UTC(startParts[0], startParts[1] - 1, startParts[2]);
       const endUtc = Date.UTC(endParts[0], endParts[1] - 1, endParts[2]);
 
-      const days = (endUtc - startUtc) / (1000 * 60 * 60 * 24);
-      return Math.round(days);
+      return Math.round((endUtc - startUtc) / (1000 * 60 * 60 * 24));
     }
 
     function resetOutputs() {
@@ -586,9 +633,41 @@
       summaryOutput.value = '';
     }
 
+    function setCardExpanded(card, expanded) {
+      card.dataset.expanded = expanded ? 'true' : 'false';
+      const details = card.querySelector('.equipment-details');
+      details.classList.toggle('hidden', !expanded);
+    }
+
+    function captureCardState(card) {
+      const quantities = {};
+      card.querySelectorAll('.machine-qty-input').forEach(input => {
+        quantities[input.dataset.machineName] = Number(input.value) || 0;
+      });
+
+      const boostManualEntries = [...card.querySelectorAll('.boost-manual-input')].map(input => input.value);
+
+      return {
+        date: card.querySelector('.change-date')?.value || '',
+        quantities,
+        boostCount: Number(card.querySelector('.boost-count-input')?.value || 0),
+        boostManualEntries,
+        expanded: card.dataset.expanded === 'true'
+      };
+    }
+
+    function getAllCardStates() {
+      return [...changesContainer.querySelectorAll('.change-card')].map(captureCardState);
+    }
+
     function refreshChangeTitles() {
-      [...changesContainer.querySelectorAll('.change-card')].forEach((card, index) => {
+      const cards = [...changesContainer.querySelectorAll('.change-card')];
+      cards.forEach((card, index) => {
         card.querySelector('.change-title').textContent = `Equipment Change ${index + 1}`;
+        const addNextBtn = card.querySelector('.add-next-btn');
+        if (addNextBtn) {
+          addNextBtn.style.display = index === cards.length - 1 ? 'inline-flex' : 'none';
+        }
       });
     }
 
@@ -625,70 +704,200 @@
       return wrapper;
     }
 
-    function refreshChangeMachineInputs() {
-      const changeCards = [...changesContainer.querySelectorAll('.change-card')];
+    function createBoostBlock(currentBoostCount = 0, prevBoostCount = 0, previousManualValues = []) {
+      const safeBoostCount = Math.max(0, Math.min(20, Number(currentBoostCount) || 0));
 
-      changeCards.forEach(card => {
-        const existingValues = {};
-        card.querySelectorAll('.machine-qty-input').forEach(input => {
-          existingValues[input.dataset.machineName] = input.value;
-        });
+      const options = Array.from({ length: 21 }, (_, i) => {
+        const selected = i === safeBoostCount ? 'selected' : '';
+        return `<option value="${i}" ${selected}>${i}</option>`;
+      }).join('');
 
-        const grid = card.querySelector('.change-machine-count-grid');
-        grid.innerHTML = '';
+      const container = document.createElement('div');
+      container.innerHTML = `
+        <div class="small" style="font-weight:700; margin-bottom:8px;">Boost Bar (manual kWh entry)</div>
+        <div class="qty-control">
+          <label class="qty-label">Boost bars in place at completion of works on this date</label>
+          <span class="qty-rate">Manual kWh entry required on the next change date when removed</span>
+          <div class="qty-inline">
+            <button type="button" class="ghost mini boost-down">−</button>
+            <select class="boost-count-input">${options}</select>
+            <button type="button" class="ghost mini boost-up">+</button>
+          </div>
+        </div>
+      `;
 
+      if (prevBoostCount > 0) {
+        const note = document.createElement('div');
+        note.className = 'small';
+        note.style.marginTop = '12px';
+        note.innerHTML = `Enter the final kWh reading for any boost bar removed on this date. Leave blank if that boost bar is still staying on site.`;
+        container.appendChild(note);
+
+        const grid = document.createElement('div');
+        grid.className = 'boost-entry-grid';
+
+        for (let i = 0; i < prevBoostCount; i++) {
+          const box = document.createElement('div');
+          box.className = 'boost-entry';
+          box.innerHTML = `
+            <label>Boost Bar ${i + 1} kWh on this date</label>
+            <input type="number" class="boost-manual-input" min="0" step="0.01" value="${previousManualValues[i] ?? ''}" placeholder="Leave blank if still in use" />
+          `;
+          grid.appendChild(box);
+        }
+
+        container.appendChild(grid);
+      }
+
+      return container;
+    }
+
+    function refreshAllCards() {
+      const cards = [...changesContainer.querySelectorAll('.change-card')];
+      const states = cards.map(captureCardState);
+
+      let prevBoostCount = 0;
+
+      cards.forEach((card, index) => {
+        const state = states[index] || {
+          date: '',
+          quantities: {},
+          boostCount: 0,
+          boostManualEntries: [],
+          expanded: false
+        };
+
+        const machineGrid = card.querySelector('.change-machine-count-grid');
+        machineGrid.innerHTML = '';
         machines.forEach(machine => {
-          const previous = existingValues[machine.name] ?? 0;
-          grid.appendChild(createCountField(machine, previous));
+          const previous = state.quantities[machine.name] ?? 0;
+          machineGrid.appendChild(createCountField(machine, previous));
         });
+
+        const boostBlock = card.querySelector('.change-boost-block');
+        boostBlock.innerHTML = '';
+        boostBlock.appendChild(createBoostBlock(state.boostCount, prevBoostCount, state.boostManualEntries));
+
+        const boostSelect = card.querySelector('.boost-count-input');
+        const boostDown = card.querySelector('.boost-down');
+        const boostUp = card.querySelector('.boost-up');
+
+        boostDown.addEventListener('click', () => {
+          boostSelect.value = String(Math.max(0, Number(boostSelect.value) - 1));
+          refreshAllCards();
+        });
+
+        boostUp.addEventListener('click', () => {
+          boostSelect.value = String(Math.min(20, Number(boostSelect.value) + 1));
+          refreshAllCards();
+        });
+
+        boostSelect.addEventListener('change', () => {
+          refreshAllCards();
+        });
+
+        const dateInput = card.querySelector('.change-date');
+        dateInput.value = state.date || '';
+        dateInput.onchange = () => {
+          if (dateInput.value) {
+            setCardExpanded(card, true);
+          } else {
+            setCardExpanded(card, false);
+          }
+        };
+
+        if (state.date && state.expanded) {
+          setCardExpanded(card, true);
+        } else if (state.date && !state.expanded && index === 0) {
+          setCardExpanded(card, true);
+        } else {
+          setCardExpanded(card, !!(state.date && state.expanded));
+        }
+
+        prevBoostCount = Number(card.querySelector('.boost-count-input')?.value || 0);
       });
+
+      refreshChangeTitles();
     }
 
     function getLastChangeQuantities() {
       const cards = [...changesContainer.querySelectorAll('.change-card')];
-      if (!cards.length) return {};
+      if (!cards.length) return { quantities: {}, boostCount: 0 };
 
-      const lastCard = cards[cards.length - 1];
-      const values = {};
-      lastCard.querySelectorAll('.machine-qty-input').forEach(input => {
-        values[input.dataset.machineName] = Number(input.value) || 0;
+      const last = cards[cards.length - 1];
+      const quantities = {};
+      last.querySelectorAll('.machine-qty-input').forEach(input => {
+        quantities[input.dataset.machineName] = Number(input.value) || 0;
       });
-      return values;
+
+      return {
+        quantities,
+        boostCount: Number(last.querySelector('.boost-count-input')?.value || 0)
+      };
     }
 
-    function addChange(date = '', qtyValues = null) {
+    function addChange(date = '', data = {}, options = {}) {
+      const { scroll = true } = options;
+
       const fragment = changeTemplate.content.cloneNode(true);
       const card = fragment.querySelector('.change-card');
-      card.querySelector('.change-date').value = date;
+
+      card.querySelector('.remove-change-btn').addEventListener('click', () => {
+        card.remove();
+        refreshAllCards();
+      });
 
       card.querySelector('.remove-all-btn').addEventListener('click', () => {
         card.querySelectorAll('.machine-qty-input').forEach(input => {
           input.value = '0';
         });
+
+        const boostSelect = card.querySelector('.boost-count-input');
+        if (boostSelect) boostSelect.value = '0';
+
+        const currentlyExpanded = card.dataset.expanded === 'true';
+        setCardExpanded(card, !currentlyExpanded);
+        refreshAllCards();
       });
 
-      card.querySelector('.remove-change-btn').addEventListener('click', () => {
-        card.remove();
-        refreshChangeTitles();
+      card.querySelector('.add-next-btn').addEventListener('click', () => {
+        addCopiedChange();
       });
 
       changesContainer.appendChild(fragment);
-      refreshChangeTitles();
-      refreshChangeMachineInputs();
 
       const insertedCard = changesContainer.lastElementChild;
-      if (qtyValues) {
+      insertedCard.querySelector('.change-date').value = date || '';
+
+      const initialExpanded = !!date;
+      setCardExpanded(insertedCard, initialExpanded);
+
+      refreshAllCards();
+
+      if (data.quantities) {
         insertedCard.querySelectorAll('.machine-qty-input').forEach(input => {
-          const incoming = qtyValues[input.dataset.machineName];
-          input.value = String(Math.max(0, Math.min(20, Number(incoming) || 0)));
+          input.value = String(Math.max(0, Math.min(20, Number(data.quantities[input.dataset.machineName]) || 0)));
         });
       }
 
-      insertedCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (typeof data.boostCount !== 'undefined') {
+        const boostSelect = insertedCard.querySelector('.boost-count-input');
+        if (boostSelect) boostSelect.value = String(Math.max(0, Math.min(20, Number(data.boostCount) || 0)));
+      }
+
+      refreshAllCards();
+
+      if (scroll) {
+        insertedCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
     function addCopiedChange() {
-      addChange('', getLastChangeQuantities());
+      const last = getLastChangeQuantities();
+      addChange('', {
+        quantities: last.quantities,
+        boostCount: last.boostCount
+      }, { scroll: true });
     }
 
     function buildSummary(result) {
@@ -702,11 +911,15 @@
       result.periods.forEach((period, index) => {
         const machineText = period.machineBreakdown.length
           ? period.machineBreakdown.map(item => `${item.qty} x ${item.name}`).join(', ')
-          : 'No machines';
+          : 'No fixed-rate equipment';
 
         lines.push(
           `${getOrdinalLabel(index)} Drying Period (${period.days} ${period.days === 1 ? 'day' : 'days'}): ${machineText} from ${period.startDisplay} to ${period.endDisplay} for a total of ${formatNumber(period.kwh, 2)} kWh.`
         );
+
+        if (period.boostManualTotal > 0) {
+          lines.push(`Boost Bar manual entries recorded on ${period.endDisplay}: ${formatNumber(period.boostManualTotal, 2)} kWh.`);
+        }
       });
 
       lines.push('');
@@ -722,34 +935,36 @@
 
     function calculate() {
       clearMessage();
-      const changeCards = [...changesContainer.querySelectorAll('.change-card')];
 
       if (!machines.length) {
         showMessage('Add at least one piece of equipment before calculating.', 'error');
         return;
       }
 
-      if (changeCards.length < 2) {
+      const cards = [...changesContainer.querySelectorAll('.change-card')];
+      if (cards.length < 2) {
         showMessage('Enter at least two change dates so the calculator has a start and finish.', 'error');
         return;
       }
 
-      const changes = [];
-      for (let i = 0; i < changeCards.length; i++) {
-        const card = changeCards[i];
+      const changes = cards.map((card, index) => {
         const date = card.querySelector('.change-date').value;
-        if (!date) {
-          showMessage(`Enter a date for equipment change ${i + 1}.`, 'error');
-          return;
-        }
+        if (!date) throw new Error(`Enter a date for equipment change ${index + 1}.`);
 
         const quantities = {};
         card.querySelectorAll('.machine-qty-input').forEach(input => {
           quantities[input.dataset.machineName] = Number(input.value) || 0;
         });
 
-        changes.push({ date, quantities });
-      }
+        const boostCount = Number(card.querySelector('.boost-count-input')?.value || 0);
+        const boostManualEntries = [...card.querySelectorAll('.boost-manual-input')]
+          .map(input => input.value.trim())
+          .filter(v => v !== '')
+          .map(v => Number(v))
+          .filter(v => Number.isFinite(v) && v >= 0);
+
+        return { date, quantities, boostCount, boostManualEntries };
+      });
 
       for (let i = 1; i < changes.length; i++) {
         if (changes[i].date <= changes[i - 1].date) {
@@ -758,9 +973,11 @@
         }
       }
 
-      const finalTotalMachines = Object.values(changes[changes.length - 1].quantities).reduce((sum, qty) => sum + qty, 0);
-      if (finalTotalMachines !== 0) {
-        showMessage('The final change date should have all machine quantities set to 0.', 'error');
+      const finalFixedEquipment = Object.values(changes[changes.length - 1].quantities).reduce((sum, qty) => sum + qty, 0);
+      const finalBoostCount = changes[changes.length - 1].boostCount;
+
+      if (finalFixedEquipment !== 0 || finalBoostCount !== 0) {
+        showMessage('The final change date should have all equipment and boost bars set to 0.', 'error');
         return;
       }
 
@@ -769,7 +986,10 @@
         totalDays: 0,
         totalCost: 0,
         periods: [],
-        byMachine: machines.map(m => ({ name: m.name, kwh: 0 })),
+        byMachine: [
+          ...machines.map(m => ({ name: m.name, kwh: 0 })),
+          { name: 'Boost Bar (manual kWh entry)', kwh: 0 }
+        ]
       };
 
       for (let i = 0; i < changes.length - 1; i++) {
@@ -793,7 +1013,7 @@
             machineBreakdown.push({
               name: machine.name,
               qty,
-              kwh: machineKwh,
+              kwh: machineKwh
             });
           }
 
@@ -801,14 +1021,22 @@
           periodKwh += machineKwh;
         });
 
+        const boostManualTotal = next.boostManualEntries.reduce((sum, v) => sum + v, 0);
+        if (boostManualTotal > 0) {
+          result.byMachine[result.byMachine.length - 1].kwh += boostManualTotal;
+          periodKwh += boostManualTotal;
+        }
+
         result.totalKwh += periodKwh;
         result.totalDays += days;
+
         result.periods.push({
           startDisplay: formatNaturalDate(current.date),
           endDisplay: formatNaturalDate(next.date),
           days,
           kwh: periodKwh,
           machineBreakdown,
+          boostManualTotal
         });
       }
 
@@ -828,6 +1056,7 @@
         showMessage('Nothing to copy yet. Run a calculation first.', 'error');
         return;
       }
+
       try {
         await navigator.clipboard.writeText(text);
         showMessage(successMessage, 'success');
@@ -882,21 +1111,15 @@
         return;
       }
 
-      const oldQuantitiesByCard = [...changesContainer.querySelectorAll('.change-card')].map(card => {
-        const values = {};
-        card.querySelectorAll('.machine-qty-input').forEach(input => {
-          values[input.dataset.machineName] = Number(input.value) || 0;
-        });
-        return values;
-      });
-
+      const oldStates = getAllCardStates();
       machines = updatedMachines;
-      refreshChangeMachineInputs();
+      refreshAllCards();
 
-      [...changesContainer.querySelectorAll('.change-card')].forEach((card, cardIndex) => {
-        const oldValues = oldQuantitiesByCard[cardIndex] || {};
+      const cards = [...changesContainer.querySelectorAll('.change-card')];
+      cards.forEach((card, index) => {
+        const state = oldStates[index] || {};
         card.querySelectorAll('.machine-qty-input').forEach(input => {
-          input.value = String(Math.max(0, Math.min(20, Number(oldValues[input.dataset.machineName]) || 0)));
+          input.value = String(Math.max(0, Math.min(20, Number(state.quantities?.[input.dataset.machineName]) || 0)));
         });
       });
 
@@ -913,38 +1136,71 @@
       changesContainer.innerHTML = '';
 
       addChange('2026-03-01', {
-        'Sahara': 10,
-        'Velo': 2,
-        'Axial': 2,
-        'Dri-Pod': 0,
-        'BD2500': 0,
-        'Midas (black dehum)': 0,
-        'Trotec Qube (yellow dehum)': 0,
-        'Dri-Eaz DrizAir 2000 (blue upright dehum)': 3,
-        'Heylo Air Scrubber (orange AFD)': 0,
-        'Drieaz Defender (blue AFD)': 0,
-        'Drymatic Heat (boost bar?)': 3
-      });
-      addChange('2026-04-16', {
-        'Sahara': 0,
-        'Velo': 0,
-        'Axial': 0,
-        'Dri-Pod': 0,
-        'BD2500': 0,
-        'Midas (black dehum)': 0,
-        'Trotec Qube (yellow dehum)': 0,
-        'Dri-Eaz DrizAir 2000 (blue upright dehum)': 0,
-        'Heylo Air Scrubber (orange AFD)': 0,
-        'Drieaz Defender (blue AFD)': 0,
-        'Drymatic Heat (boost bar?)': 0
-      });
+        quantities: {
+          'Sahara': 10,
+          'Velo': 2,
+          'Axial': 2,
+          'Dri-Pod': 0,
+          'BD2500': 0,
+          'Midas (black dehum)': 0,
+          'Trotec Qube (yellow dehum)': 0,
+          'Dri-Eaz DrizAir 2000 (blue upright dehum)': 3,
+          'Heylo Air Scrubber (orange AFD)': 0,
+          'Drieaz Defender (blue AFD)': 0
+        },
+        boostCount: 2
+      }, { scroll: false });
+
+      addChange('2026-03-10', {
+        quantities: {
+          'Sahara': 8,
+          'Velo': 2,
+          'Axial': 2,
+          'Dri-Pod': 0,
+          'BD2500': 0,
+          'Midas (black dehum)': 0,
+          'Trotec Qube (yellow dehum)': 0,
+          'Dri-Eaz DrizAir 2000 (blue upright dehum)': 2,
+          'Heylo Air Scrubber (orange AFD)': 0,
+          'Drieaz Defender (blue AFD)': 0
+        },
+        boostCount: 1
+      }, { scroll: false });
+
+      const cards = [...changesContainer.querySelectorAll('.change-card')];
+      if (cards[1]) {
+        const boostInputs = cards[1].querySelectorAll('.boost-manual-input');
+        if (boostInputs[0]) boostInputs[0].value = '54.4';
+      }
+
+      addChange('2026-03-15', {
+        quantities: {
+          'Sahara': 0,
+          'Velo': 0,
+          'Axial': 0,
+          'Dri-Pod': 0,
+          'BD2500': 0,
+          'Midas (black dehum)': 0,
+          'Trotec Qube (yellow dehum)': 0,
+          'Dri-Eaz DrizAir 2000 (blue upright dehum)': 0,
+          'Heylo Air Scrubber (orange AFD)': 0,
+          'Drieaz Defender (blue AFD)': 0
+        },
+        boostCount: 0
+      }, { scroll: false });
+
+      const latestCards = [...changesContainer.querySelectorAll('.change-card')];
+      if (latestCards[2]) {
+        const boostInputs = latestCards[2].querySelectorAll('.boost-manual-input');
+        if (boostInputs[0]) boostInputs[0].value = '63.2';
+      }
 
       resetOutputs();
       clearMessage();
       showMessage('Example loaded. Click Calculate to test it.', 'success');
     }
 
-    document.getElementById('addChangeBtn').addEventListener('click', addCopiedChange);
+    document.getElementById('addChangeTopBtn').addEventListener('click', addCopiedChange);
     document.getElementById('calculateBtn').addEventListener('click', calculate);
     document.getElementById('loadExampleBtn').addEventListener('click', loadExample);
     document.getElementById('copyTotalBtn').addEventListener('click', () => copyText(totalOnlyOutput.textContent, 'Total copied to clipboard.'));
@@ -964,7 +1220,7 @@
       }
     });
 
-    addChange('', {});
+    addChange('', { quantities: {}, boostCount: 0 }, { scroll: false });
     resetOutputs();
   </script>
 </body>
